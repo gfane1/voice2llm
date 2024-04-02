@@ -1,0 +1,162 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realtime WebSocket Audio Streaming</title>
+    <style>
+        body {
+            background-color: black;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>Realtime WebSocket Audio ddddStreaming</h1>
+    <img src="/assets/waiting.gif" />
+    <button id="startButton">Start Streaming</button>
+    <button id="stopButton">Stop Streaming</button>
+    <div id="responseContainer"></div>
+    <script src="assets/hark.bundle.js"></script>
+    <script src="assets/voice_audio_manager.js"></script>
+    <script>
+
+
+
+
+	
+
+function downsampleBuffer (buffer, sampleRate, outSampleRate) {
+    if (outSampleRate == sampleRate) {
+      return buffer;
+    }
+    if (outSampleRate > sampleRate) {
+      throw 'downsampling rate show be smaller than original sample rate';
+    }
+    var sampleRateRatio = sampleRate / outSampleRate;
+    var newLength = Math.round(buffer.length / sampleRateRatio);
+    var result = new Int16Array(newLength);
+    var offsetResult = 0;
+    var offsetBuffer = 0;
+    while (offsetResult < result.length) {
+      var nextOffsetBuffer = Math.round((offsetResult + 1) * sampleRateRatio);
+      var accum = 0,
+        count = 0;
+      for (var i = offsetBuffer; i < nextOffsetBuffer && i < buffer.length; i++) {
+        accum += buffer[i];
+        count++;
+      }
+  
+      result[offsetResult] = Math.min(1, accum / count) * 0x7fff;
+      offsetResult++;
+      offsetBuffer = nextOffsetBuffer;
+    }
+    return result.buffer;
+} // closes function downsampleBuffer()
+
+//================= RECORDING =================
+
+// Get access to the audio input (microphone)
+navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
+	// Create an AudioContext and MediaRecorder instances
+	
+	let AudioContext,
+    processor,
+    input,
+    context,
+    globalStream
+	let socket;
+	
+	function startRecording() {
+		
+		
+		// Set up a WebSocket connection here...
+		try{
+			socket=new WebSocket("ws://"+window.location.host+"/asrstream")
+			//console.log(socket)
+		} catch(e){console.log('error:', e);}
+		
+		socket.onopen = () => {
+			console.log('WebSocket connection opened');
+		};
+
+		socket.onclose = () => {
+			console.log('WebSocket connection closed');
+		};
+		socket.onmessage = event => {
+			console.log('WebSocket event',event);
+			let responseContainer = document.getElementById('responseContainer');
+			responseContainer.innerHTML += `<p>${event.data}</p>`;
+		};
+		socket.onerror = function(e) {console.log("socket ERROR",e)}
+		
+		
+		
+		
+		
+		streamStreaming = true;
+		AudioContext = window.AudioContext || window.webkitAudioContext;
+		context = new AudioContext({
+		  // if Non-interactive, use 'playback' or 'balanced' // https://developer.mozilla.org/en-US/docs/Web/API/AudioContextLatencyCategory
+		  latencyHint: 'interactive',
+		});
+		let bufferSize = 4096*4
+		processor = context.createScriptProcessor(bufferSize, 1, 1);
+		processor.connect(context.destination);
+		context.resume();
+	  
+		var handleSuccess = function (stream) {
+		  globalStream = stream;
+		  input = context.createMediaStreamSource(stream);
+		  input.connect(processor);
+	  
+		  processor.onaudioprocess = function (e) {
+			var left = e.inputBuffer.getChannelData(0);
+			var left16 = downsampleBuffer(left, 44100, 16000);
+			//console.log(left16)
+			if (socket) socket.send(left16);
+		  };
+		};
+	  
+		navigator.mediaDevices.getUserMedia({audio: true, video: false}).then(handleSuccess);
+	} // closes function startRecording()
+
+	function stopRecording() {
+		streamStreaming = false;
+		if (socket) {
+			socket.send(null);
+			try {
+				//socket.close()
+			} catch (e) {}
+		}
+		let track = globalStream.getTracks()[0];
+		track.stop();
+	  
+		if (input) input.disconnect(processor);
+		if (processor) processor.disconnect(context.destination);
+		if (context) context.close().then(function () {
+		  input = null;
+		  processor = null;
+		  context = null;
+		  AudioContext = null;
+		});
+		
+	} // closes function stopRecording()
+
+	document.getElementById('startButton').addEventListener('click', () => {
+			startRecording();
+		});
+
+		document.getElementById('stopButton').addEventListener('click', () => {
+			stopRecording();
+		});
+});
+	
+		
+
+
+
+		
+    </script>
+</body>
+</html>
+

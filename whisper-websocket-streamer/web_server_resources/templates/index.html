@@ -1,0 +1,58 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realtime WebSocket Audio Streaming</title>
+    <style>
+        body {
+            background-color: black;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div id="responseContainer"></div>
+    <script src="assets/hark.bundle.js"></script>
+    <script src="assets/voice_audio_manager.js"></script>
+    
+    
+    <h1>Chat</h1>
+    <img src="/assets/waiting.gif" id="waitingimage" style="display: none" />
+    <img src="/assets/microphone-solid.gif" id="initimage" style="display: block; width: 70%" onClick="init()" />
+    <script>
+		let vam = null
+	
+		function init() {
+			vam = VoiceAudioManager({
+				url:"ws://"+window.location.host+"/asrstream",
+				onMessage: function(event) {
+					let responseContainer = document.getElementById('responseContainer');
+					responseContainer.innerHTML += `<p>${event.data}</p>`;
+				}
+			})
+			vam.start()
+			document.getElementById('initimage').style.display= "none"
+			document.getElementById('buttons').style.display= "block"
+		}
+		
+		function toggleButtons(isStarted) {
+			if (isStarted) {
+				document.getElementById('startButton').style.display= "none"
+				document.getElementById('stopButton').style.display= "block"
+			} else {
+				document.getElementById('startButton').style.display= "block"
+				document.getElementById('stopButton').style.display= "none"
+			}
+		}
+		
+    </script>
+    
+    <div id="buttons"  style="display: none" >
+    <button id="startButton" onClick="vam.start(); toggleButtons(true)"  style="display: none" >Start</button>
+    <button id="stopButton" onClick="vam.stop(); toggleButtons(false)" >Stop</button>
+    <div id="responsecontainer"></div>
+    </div>
+    
+</body>
+</html>
+
