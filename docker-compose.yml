@@ -14,15 +14,44 @@ services:
               capabilities: [gpu]
     environment:
       - PYTHONUNBUFFERED=1
+      - SSL_DOMAIN_NAME=peppertrees.asuscomm.com
+      - SSL_EMAIL=whisper@syntithenai.com
+      
     ports:
-      - "9000:9000"
+      - "443:443"
     volumes:
       - ./whisper-websocket-streamer:/app/whisper-websocket-streamer
-      - cache-pip:/root/.cache/pip
-      - cache-poetry:/root/.cache/poetry
-      - cache-whisper:/root/.cache/whisper
-
-volumes:
-  cache-pip:
-  cache-poetry:
-  cache-whisper:
+      # share model files with GUI on host	
+      - /home/stever/.local/share/nomic.ai/GPT4All:/app/GPT4All
+      # - ./cache/gpt4all:/app/GPT4All
+      - ./cache/pip:/root/.cache/pip
+      - ./cache/poetry:/root/.cache/poetry
+      - ./cache/whisper:/root/.cache/whisper
+      - ./cache/letsencrypt:/etc/letsencrypt/
+    #entrypoint: sleep 8888888888
+    # 
+    entrypoint:  /app/whisper-websocket-streamer/generate_ssl.sh
+    command: /app/.venv/bin/python -m gunicorn --bind 0.0.0.0:443  --workers 1 --reload --timeout 0 --keyfile /etc/letsencrypt/live/peppertrees.asuscomm.com/privkey.pem --certfile /etc/letsencrypt/live/peppertrees.asuscomm.com/cert.pem whisper-websocket-streamer.webservice:app -k uvicorn.workers.UvicornWorker
+      
+  coqui-tts-webservice-gpu:
+    image: ghcr.io/coqui-ai/tts
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./tts-output:/tmp/tts-output ghcr.io/coqui-ai/tts
+      - ./tts_models:/root/.local/share/tts/
+      - ./cache/letsencrypt:/etc/letsencrypt/
+      - ./tts_server/server.py:/root/TTS/server/server.py
+      - ./cache/letsencrypt/archive/peppertrees.asuscomm.com/privkey1.pem:/root/key.pem
+      - ./cache/letsencrypt/archive/peppertrees.asuscomm.com/cert1.pem:/root/cert.pem
+    entrypoint: python3 TTS/server/server.py --model_name tts_models/en/vctk/vits --use_cuda true
+   

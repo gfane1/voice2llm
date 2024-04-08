@@ -3,13 +3,20 @@
 
 let VoiceAudioManager = function(config) {
 	
+	let isMuted = false
 	let AudioContext,
     processor,
     input,
     context,
     globalStream
 	let socket;
+	let isPlaying = false
+	let bufferSource
+	let urlAudioPlayer
+	let playTime
+	let playQueue = []
 	
+	//console.log(Object.keys(that))
 
 	function downsampleBuffer (buffer, sampleRate, outSampleRate) {
 		if (outSampleRate == sampleRate) {
@@ -105,6 +112,7 @@ let VoiceAudioManager = function(config) {
 
 			speechEvents.on('stopped_speaking', function() {
 			  console.log('stopped_speaking');
+			  if (config.onSpeech) config.offSpeech()
 			});
 
 			input = context.createMediaStreamSource(stream);
@@ -113,9 +121,9 @@ let VoiceAudioManager = function(config) {
 			processor.onaudioprocess = function (e) {
 				var left = e.inputBuffer.getChannelData(0);
 				var left16 = downsampleBuffer(left, 44100, 16000);
-				console.log(left16)
+				//console.log(left16)
 				//if (socket && socket.readyState == 1 && isSending) 
-				socket.send(left16);
+				if (!isPlaying) socket.send(left16);
 			};
 		}
 	  
@@ -124,6 +132,7 @@ let VoiceAudioManager = function(config) {
 	
 	function start() {
 		// ensure socket connection
+		if (config.onStart) config.onStart()
 		if (socketIsReady(socket)) {
 			startAudio()
 		} else {
@@ -136,6 +145,7 @@ let VoiceAudioManager = function(config) {
 	} 
 	
 	function stop() {
+		if (config.onStop) config.onStop()
 		if (socket) {
 			socket.send(null);
 			try {
@@ -155,10 +165,69 @@ let VoiceAudioManager = function(config) {
 		});
 		
 	} 
-			
+	
+	
+	function mute() {
+		console.log('MUTE')
+		isMuted = true
+		if (urlAudioPlayer) {
+			urlAudioPlayer.volume = 0
+		}
+	}
+	
+	function unmute() {
+		isMuted = false
+		if (urlAudioPlayer) urlAudioPlayer.volume = 1
+	}
+		
+	function stopPlaying() {
+		console.log('STOP PLAY')
+		if (config.onStopPlaying) config.onStopPlaying()
+		isPlaying = false
+		playQueue = []
+		if (urlAudioPlayer) {
+			urlAudioPlayer.pause()
+		}
+	};
+	
+	
+	function playUrl(url) {
+		return new Promise(function(resolve,reject) {
+			if (isPlaying) {
+				playQueue.push(url)
+			} else {
+				isPlaying = true 
+				urlAudioPlayer = new Audio(url);
+				urlAudioPlayer.volume = isMuted ? 0 : 1
+				urlAudioPlayer.addEventListener("canplaythrough", event => {
+				  /* the audio is now playable; play it if permissions allow */
+				  urlAudioPlayer.play();
+				});
+				urlAudioPlayer.addEventListener("ended", event => {
+					if (playQueue.length > 0) {
+						urlAudioPlayer.src = playQueue.pop()
+						urlAudioPlayer.pause()
+						urlAudioPlayer.load()
+						urlAudioPlayer.play()
+						if (config.onStartPlaying) config.onStartPlaying()
+						
+					} else {
+						isPlaying = false 
+						if (config.onFinishedPlaying) config.onFinishedPlaying()
+						resolve()
+					}
+				})
+				urlAudioPlayer.addEventListener("error", event => {
+					isPlaying = false
+					if (config.onError) config.onError(event)
+					resolve()
+				})
+			}
+		})
+	}    	
 
 	
-	return {start, stop}
+	return {start, stop, playUrl, stopPlaying, isPlaying, mute, unmute}
 }
 
 window.VoiceAudioManager = VoiceAudioManager

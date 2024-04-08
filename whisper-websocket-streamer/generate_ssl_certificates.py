@@ -2,7 +2,7 @@ import os
 
 
 # require apt-get install openssl and certbot
-def generate_certificates():
+def generate_ssl_certificates():
     """generate ssl certficates for either localhost or specified domain name SSL_DOMAIN_NAME"""
     print('GEN CERTS')
     domain = os.environ.get('SSL_DOMAIN_NAME', 'localhost')
@@ -11,7 +11,7 @@ def generate_certificates():
     cert_path = '/etc/letsencrypt/live/' + domain
     if domain == "localhost":
         print('GEN LOCALHOST SSL KEY')
-        call(['mkdir', '-p', cert_path])
+        os.system(' '.join(['mkdir', '-p', cert_path]))
         cmd = [
             'openssl',
             'req',
@@ -29,16 +29,16 @@ def generate_certificates():
             '-nodes',
             '-subj',
             '/CN=localhost']
-        call(cmd)
+        os.system(' '.join(cmd))
 
     else:
         # files exist so renew
         if os.path.isfile(cert_path + '/cert.pem') and os.path.isfile(cert_path + \
         '/fullchain.pem') and os.path.isfile(cert_path + '/privkey.pem'):
             print('RENEW CERTS')
-            cmd = ['	', 'renew']
+            cmd = ['certbot', '	renew']
             print(cmd)
-            call(cmd)
+            os.system(' '.join(cmd))
 
         else:
             print('GENERATE CERTS')
@@ -54,4 +54,7 @@ def generate_certificates():
                 email,
                 ' --noninteractive']
             print(cmd)
-            call(cmd)
+            os.system(' '.join(cmd))
+
+if __name__ == "__main__":
+	generate_ssl_certificates()

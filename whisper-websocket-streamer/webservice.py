@@ -1,4 +1,3 @@
-import importlib.metadata
 import sys
 import os
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,18 +7,16 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from webservice_routes import add_routes
 from webservice_streaming_routes import add_streaming_routes
 
-projectMetadata = importlib.metadata.metadata('whisper-asr-webservice')
 app = FastAPI(
-    title=projectMetadata['Name'].title().replace('-', ' '),
-    description=projectMetadata['Summary'],
-    version=projectMetadata['Version'],
+    title="Whisper Webservice",
+    description='',
+    version='0.0.1',
     contact={
-        "url": projectMetadata['Home-page']
+        "url": ''
     },
-    swagger_ui_parameters={"defaultModelsExpandDepth": -1},
     license_info={
-        "name": "MIT License",
-        "url": projectMetadata['License']
+        "name": "",
+        "url": ''
     }
 )
 

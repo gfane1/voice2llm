@@ -16,7 +16,9 @@ from fastapi.templating import Jinja2Templates
 # from whisper_online import *
 # from constants import SAMPLING_RATE, LANG
 
+
 def add_routes(app):
+	
 	# LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
 
 	# from faster_whisper_core import transcribe, language_detection
