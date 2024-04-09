@@ -15,6 +15,7 @@ let VoiceAudioManager = function(config) {
 	let urlAudioPlayer
 	let playTime
 	let playQueue = []
+	const PLAYBACK_RATE = 0.75
 	
 	//console.log(Object.keys(that))
 
@@ -131,6 +132,7 @@ let VoiceAudioManager = function(config) {
 	}
 	
 	function start() {
+		console.log('vam start')
 		// ensure socket connection
 		if (config.onStart) config.onStart()
 		if (socketIsReady(socket)) {
@@ -145,6 +147,7 @@ let VoiceAudioManager = function(config) {
 	} 
 	
 	function stop() {
+		console.log('vam stop')
 		if (config.onStop) config.onStop()
 		if (socket) {
 			socket.send(null);
@@ -152,8 +155,10 @@ let VoiceAudioManager = function(config) {
 				//socket.close()
 			} catch (e) {}
 		}
-		let track = globalStream.getTracks()[0];
-		track.stop();
+		try {
+			let track = globalStream.getTracks()[0];
+			track.stop();
+		} catch (e) {}
 	  
 		if (input) input.disconnect(processor);
 		if (processor) processor.disconnect(context.destination);
@@ -190,7 +195,6 @@ let VoiceAudioManager = function(config) {
 		}
 	};
 	
-	
 	function playUrl(url) {
 		return new Promise(function(resolve,reject) {
 			if (isPlaying) {
@@ -198,18 +202,23 @@ let VoiceAudioManager = function(config) {
 			} else {
 				isPlaying = true 
 				urlAudioPlayer = new Audio(url);
+				urlAudioPlayer.playbackRate = PLAYBACK_RATE
 				urlAudioPlayer.volume = isMuted ? 0 : 1
 				urlAudioPlayer.addEventListener("canplaythrough", event => {
 				  /* the audio is now playable; play it if permissions allow */
+				  if (config.onStartPlaying) config.onStartPlaying()
 				  urlAudioPlayer.play();
 				});
 				urlAudioPlayer.addEventListener("ended", event => {
+					console.log("ENDED", playQueue)
 					if (playQueue.length > 0) {
 						urlAudioPlayer.src = playQueue.pop()
 						urlAudioPlayer.pause()
 						urlAudioPlayer.load()
-						urlAudioPlayer.play()
+						urlAudioPlayer.playbackRate = PLAYBACK_RATE
 						if (config.onStartPlaying) config.onStartPlaying()
+						urlAudioPlayer.play()
+						resolve()
 						
 					} else {
 						isPlaying = false 

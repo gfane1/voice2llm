@@ -151,7 +151,9 @@ def add_streaming_routes(app):
 	
 	# LLM
 	#model_name = "pastiche-crown-clown-7b-dare.Q4_0.gguf"
-	model = GPT4All(model_name = "orca-mini-3b-gguf2-q4_0.gguf", model_path="/app/GPT4All", device="gpu")
+	model = GPT4All(model_name = "pastiche-crown-clown-7b-dare.Q4_0.gguf", model_path="/app/GPT4All", device="gpu")
+	# low memory option 1
+	#model = GPT4All(model_name = "orca-mini-3b-gguf2-q4_0.gguf", model_path="/app/GPT4All", device="gpu")
 	manager = multiprocessing.Manager()
 	#llm_websocket_clients = {} #manager.dict()
 	is_stopped = manager.dict()
@@ -184,9 +186,10 @@ def add_streaming_routes(app):
 			#print("clientId",client_id, cookie_or_token)
 			# TODO decrypt token using client_id and secret and verify
 			#llm_websocket_clients[client_id] = []
-			MAX_SENTENCES = 2
+			MAX_SENTENCES = 1
 			system_prompt = """### System:
-	You are a grumpy assistant who answers questions in the style of shakespeare
+You are a grumpy assistant who answers questions in the style of shakespeare
+### User:			
 			"""
 			
 			kill_me = False
