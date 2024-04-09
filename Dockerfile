@@ -48,6 +48,9 @@ RUN /app/.venv/bin/pip install gpt4all cryptography
 USER root
 RUN apt-get update && apt-get install -y nano libvulkan1 libnvidia-gl-525-server
 
+RUN /app/.venv/bin/pip install --upgrade pip
+RUN /app/.venv/bin/pip install  --upgrade nltk 
+
 #USER appuser
 
 EXPOSE 9000

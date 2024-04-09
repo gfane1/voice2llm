@@ -30,7 +30,10 @@ from faster_whisper_core import transcribe
 # torch.set_num_threads(1)
 from vad import VadDetector
 from gpt4all import GPT4All
+from nltk.tokenize import sent_tokenize
+import nltk
 
+nltk.download('punkt')
 
 from typing import Annotated, Union
 
@@ -110,7 +113,7 @@ def add_streaming_routes(app):
 					o = transcribe(load_audio(io.FileIO(output_file.name), False), 'transcribe', "en", "", False, True, "json")	
 					t = json.loads(o.read()).get('text')
 					n = time.time() - s
-					print(f"transcript in %s" % n,t)
+					#print(f"transcript in %s" % n,t)
 					if t:
 						await websocket_send_json({"transcription": t})
 					audio_buffer = asyncio.Queue()
@@ -147,7 +150,8 @@ def add_streaming_routes(app):
 		
 	
 	# LLM
-	model = GPT4All(model_name = "pastiche-crown-clown-7b-dare.Q4_0.gguf", model_path="/app/GPT4All", device="gpu")
+	#model_name = "pastiche-crown-clown-7b-dare.Q4_0.gguf"
+	model = GPT4All(model_name = "orca-mini-3b-gguf2-q4_0.gguf", model_path="/app/GPT4All", device="gpu")
 	manager = multiprocessing.Manager()
 	#llm_websocket_clients = {} #manager.dict()
 	is_stopped = manager.dict()
@@ -235,19 +239,20 @@ def add_streaming_routes(app):
 						# print('@',shared_list)
 						if len(shared_list) > 0:
 							user_query = shared_list.pop()
-							print('@@',user_query)
+							#print('@@',user_query)
 							t = time.time()
 							text_so_far = ''
 							await websocket.send_text(json.dumps({'started': time.time()}))
 							async for token in response_generator(user_query.get('query','')): #, streaming = True, callback= callback):
-								await websocket.send_text(json.dumps({'token': token}))
 								print(f'***** {token}', is_stopped)
 								text_so_far += token
 								# text_so_far = model.current_chat_session[-1].get('content')
-								sentences = text_so_far.split(".")
-								if len(sentences) > 3:
-									print("FORCE END LIMIT SENTENCES", len(sentences) ,sentences)
+								if len(sent_tokenize(text_so_far)) > MAX_SENTENCES :
+									print("FORCE END LIMIT SENTENCES")
 									is_stopped[client_id] = True
+								else:
+									await websocket.send_text(json.dumps({'token': token}))
+								
 								#print(sentences)
 								# TODO allow for last non full stop
 								# if '.' in token:

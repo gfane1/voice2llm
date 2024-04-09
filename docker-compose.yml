@@ -14,8 +14,8 @@ services:
               capabilities: [gpu]
     environment:
       - PYTHONUNBUFFERED=1
-      - SSL_DOMAIN_NAME=peppertrees.asuscomm.com
-      - SSL_EMAIL=whisper@syntithenai.com
+      - SSL_DOMAIN_NAME=${SSL_DOMAIN_NAME}
+      - SSL_EMAIL=${SSL_EMAIL}
       
     ports:
       - "443:443"
@@ -28,10 +28,10 @@ services:
       - ./cache/poetry:/root/.cache/poetry
       - ./cache/whisper:/root/.cache/whisper
       - ./cache/letsencrypt:/etc/letsencrypt/
+      - ./cache/nltk:/root/nltk_data/
     #entrypoint: sleep 8888888888
-    # 
     entrypoint:  /app/whisper-websocket-streamer/generate_ssl.sh
-    command: /app/.venv/bin/python -m gunicorn --bind 0.0.0.0:443  --workers 1 --reload --timeout 0 --keyfile /etc/letsencrypt/live/peppertrees.asuscomm.com/privkey.pem --certfile /etc/letsencrypt/live/peppertrees.asuscomm.com/cert.pem whisper-websocket-streamer.webservice:app -k uvicorn.workers.UvicornWorker
+    command: /app/.venv/bin/python -m gunicorn --bind 0.0.0.0:443  --workers 1 --reload --timeout 0 --keyfile /etc/letsencrypt/live/${SSL_DOMAIN_NAME}/privkey.pem --certfile /etc/letsencrypt/live/${SSL_DOMAIN_NAME}/cert.pem whisper-websocket-streamer.webservice:app -k uvicorn.workers.UvicornWorker
       
   coqui-tts-webservice-gpu:
     image: ghcr.io/coqui-ai/tts
@@ -51,7 +51,7 @@ services:
       - ./tts_models:/root/.local/share/tts/
       - ./cache/letsencrypt:/etc/letsencrypt/
       - ./tts_server/server.py:/root/TTS/server/server.py
-      - ./cache/letsencrypt/archive/peppertrees.asuscomm.com/privkey1.pem:/root/key.pem
-      - ./cache/letsencrypt/archive/peppertrees.asuscomm.com/cert1.pem:/root/cert.pem
+      - ./cache/letsencrypt/archive/${SSL_DOMAIN_NAME}/privkey1.pem:/root/key.pem
+      - ./cache/letsencrypt/archive/${SSL_DOMAIN_NAME}/cert1.pem:/root/cert.pem
     entrypoint: python3 TTS/server/server.py --model_name tts_models/en/vctk/vits --use_cuda true
    

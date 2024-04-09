@@ -52,6 +52,10 @@ let LanguageModelManager = function(config) {
 		}
 	}
 	
+	function continue_dialog() {
+		send('continue')
+	}
+	
 	function stop() {
 		if (!socketIsReady(socket)) {
 			socket = getSocket(config)
@@ -59,7 +63,7 @@ let LanguageModelManager = function(config) {
 		socket.send(JSON.stringify({stop: true}))
 	}
 	
-	return {send, stop, getSocket}
+	return {send, stop, getSocket, continue_dialog}
 }
 
 window.LanguageModelManager = LanguageModelManager
