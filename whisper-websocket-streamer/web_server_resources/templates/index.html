@@ -31,6 +31,7 @@
 		let responseTokens = []
 		let clausesSpoken = 0
 		let is_stopped = false
+		let is_mic_active = false
 		
 		function scrollTo(id, offset) {
 			var element = document.getElementById(id);
@@ -77,7 +78,7 @@
 			const c_id = generateRandomId()
 			document.getElementById('menu').style.display= "block"
 			lmm = LanguageModelManager({
-				url:"wss://"+window.location.host+"/llm/"+c_id+"/ws?token=fasdfsdf",
+				url:"wss://"+window.location.host+":444/llm/"+c_id+"/ws?token=fasdfsdf",
 				onMessage: function(event) {
 					try {
 						let j = JSON.parse(event.data)
@@ -107,10 +108,9 @@
 								responseContainer.innerHTML += `<p id="${currentContainerId}"><b>ASSISTANT</b>: </p>` 
 								scrollTo(currentContainerId)
 							}
-							let id = generateRandomId()
 							let thisResponseContainer = document.getElementById(currentContainerId);
 							if (thisResponseContainer) { 
-								thisResponseContainer.innerHTML = `<span>${responseTokens.join('').replace("\n","<br/>")}</span>` 
+								thisResponseContainer.innerHTML = `<span><b>ASSISTANT</b>: 	${responseTokens.join('').replace("\n","<br/>")}</span>` 
 								
 							}
 							
@@ -167,7 +167,7 @@
 				},
 				onFinishedPlaying: function() {
 					console.log("onfinish", is_finished)
-					if (is_finished) {
+					if (is_finished && is_mic_active) {
 						vam.start()
 					}
 				}
@@ -206,6 +206,7 @@
 					let id = generateRandomId()
 					vam.stop()
 					startWaiting()
+					is_mic_active = false
 					document.getElementById('responseContainer').innerHTML += `<p id="${id}" ><b>USER</b>: ${document.getElementById('usermessage').value}</p>`;
 					lmm.send(document.getElementById('usermessage').value, conversation.join("\n"));
 					document.getElementById('usermessage').value = ''
@@ -235,8 +236,8 @@
 				<div class="col-12 col-sm-6">
 					
 					<div id="buttonsright"  style="float: right; " >
-						<button  style="float: right; " class="btn btn-danger" id="startButton" onClick="vam.start(); toggleButtons(true)"   ><img height="40px"  width="40px" src="/assets/mic-off-fill.png" /></button>
-						<button  style="float: right;display: none" class="btn btn-success"  id="stopButton" onClick="vam.stop(); toggleButtons(false)" ><img height="40px"  width="40px" src="/assets/mic-fill.png" /></button>
+						<button  style="float: right; " class="btn btn-danger" id="startButton" onClick="is_mic_active = true; vam.start(); toggleButtons(true)"   ><img height="40px"  width="40px" src="/assets/mic-off-fill.png" /></button>
+						<button  style="float: right;display: none" class="btn btn-success"  id="stopButton" onClick="is_mic_active = false;  vam.stop(); toggleButtons(false)" ><img height="40px"  width="40px" src="/assets/mic-fill.png" /></button>
 						<button  style="float: right; margin-right: 0.2em" class="btn  btn-success"  id="muteButton" onClick="vam.mute(); toggleMuteButtons(true) " title="Mute"  ><img height="40px"  width="40px" src="/assets/volume-vibrate-fill.png" /></button>
 						<button  style="float: right; display: none;margin-right: 0.2em" class="btn btn-danger"  id="unmuteButton" onClick="vam.unmute(); toggleMuteButtons(false) "  title="UnMute" ><img height="40px"  width="40px" src="/assets/volume-off-vibrate-fill.png" /></button>
 					</div>

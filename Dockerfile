@@ -43,13 +43,17 @@ RUN /app/.venv/bin/pip install uvicorn["standard"] gunicorn tqdm python-multipar
 
 #COPY ./whisper-websocket-streamer /app/whisper-websocket-streamer
 
-RUN /app/.venv/bin/pip install gpt4all cryptography
+RUN /app/.venv/bin/pip install gpt4all cryptography 
+
 
 USER root
 RUN apt-get update && apt-get install -y nano libvulkan1 libnvidia-gl-525-server
-
+RUN apt-get update && apt-get install -y ffmpeg
 RUN /app/.venv/bin/pip install --upgrade pip
 RUN /app/.venv/bin/pip install  --upgrade nltk 
+RUN /app/.venv/bin/pip install google-generativeai openai
+RUN /app/.venv/bin/pip install ffmpeg ffmpeg-python 
+RUN /app/.venv/bin/pip install openai-whisper
 
 #USER appuser
 

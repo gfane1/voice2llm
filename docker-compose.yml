@@ -16,7 +16,8 @@ services:
       - PYTHONUNBUFFERED=1
       - SSL_DOMAIN_NAME=${SSL_DOMAIN_NAME}
       - SSL_EMAIL=${SSL_EMAIL}
-      
+      #- OPENAI_WHISPER_API_KEY=${OPENAI_WHISPER_API_KEY}
+      - REACT_PICOVOICE_API_KEY=${PICOVOICE_API_KEY}
     ports:
       - "443:443"
     volumes:
@@ -31,8 +32,48 @@ services:
       - ./cache/nltk:/root/nltk_data/
     #entrypoint: sleep 8888888888
     entrypoint:  /app/whisper-websocket-streamer/generate_ssl.sh
-    command: /app/.venv/bin/python -m gunicorn --bind 0.0.0.0:443  --workers 1 --reload --timeout 0 --keyfile /etc/letsencrypt/live/${SSL_DOMAIN_NAME}/privkey.pem --certfile /etc/letsencrypt/live/${SSL_DOMAIN_NAME}/cert.pem whisper-websocket-streamer.webservice:app -k uvicorn.workers.UvicornWorker
+    command: /app/.venv/bin/python -m gunicorn --bind 0.0.0.0:443  --workers 1 --reload --timeout 0 --keyfile /etc/letsencrypt/live/${SSL_DOMAIN_NAME}/privkey.pem --certfile /etc/letsencrypt/live/${SSL_DOMAIN_NAME}/cert.pem whisper-websocket-streamer.asr_webservice:app -k uvicorn.workers.UvicornWorker
+
+  llm-webservice-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SSL_DOMAIN_NAME=${SSL_DOMAIN_NAME}
+      - SSL_EMAIL=${SSL_EMAIL}
+      - LLM_MODEL=orca-mini-3b-gguf2-q4_0.gguf
+      #- LLM_MODEL=qwen1.5-0.5B-q4_0.gguf
+      # - LLM_MODEL=Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - GOOGLE_GEMINI_API_KEY=${GOOGLE_GEMINI_API_KEY}
+      - OPENAI_CHATGPT_API_KEY=${OPENAI_CHATGPT_API_KEY}
       
+    ports:
+      - "444:444"
+    volumes:
+      - ./whisper-websocket-streamer:/app/whisper-websocket-streamer
+      # share model files with GUI on host	
+      - /home/stever/.local/share/nomic.ai/GPT4All:/app/GPT4All
+      # - ./cache/gpt4all:/app/GPT4All
+      - ./cache/pip:/root/.cache/pip
+      - ./cache/poetry:/root/.cache/poetry
+      - ./cache/whisper:/root/.cache/whisper
+      - ./cache/letsencrypt:/etc/letsencrypt/
+      - ./cache/nltk:/root/nltk_data/
+    #entrypoint: sleep 8888888888
+    entrypoint:  /app/whisper-websocket-streamer/generate_ssl.sh
+    command: /app/.venv/bin/python -m gunicorn --bind 0.0.0.0:444  --workers 1 --reload --timeout 0 --keyfile /etc/letsencrypt/live/${SSL_DOMAIN_NAME}/privkey.pem --certfile /etc/letsencrypt/live/${SSL_DOMAIN_NAME}/cert.pem whisper-websocket-streamer.llm_webservice:app -k uvicorn.workers.UvicornWorker
+    
+          
   coqui-tts-webservice-gpu:
     image: ghcr.io/coqui-ai/tts
     deploy:
@@ -54,4 +95,19 @@ services:
       - ./cache/letsencrypt/archive/${SSL_DOMAIN_NAME}/privkey1.pem:/root/key.pem
       - ./cache/letsencrypt/archive/${SSL_DOMAIN_NAME}/cert1.pem:/root/cert.pem
     entrypoint: python3 TTS/server/server.py --model_name tts_models/en/vctk/vits --use_cuda true
+   
+  #coqui-tts-webservice-cpu:
+    #image: ghcr.io/coqui-ai/tts-cpu
+    #environment:
+      #- PYTHONUNBUFFERED=1
+    #ports:
+      #- "5002:5002"
+    #volumes:
+      #- ./tts-output:/tmp/tts-output ghcr.io/coqui-ai/tts
+      #- ./tts_models:/root/.local/share/tts/
+      #- ./cache/letsencrypt:/etc/letsencrypt/
+      #- ./tts_server/server.py:/root/TTS/server/server.py
+      #- ./cache/letsencrypt/archive/${SSL_DOMAIN_NAME}/privkey1.pem:/root/key.pem
+      #- ./cache/letsencrypt/archive/${SSL_DOMAIN_NAME}/cert1.pem:/root/cert.pem
+    #entrypoint: python3 TTS/server/server.py --model_name tts_models/en/vctk/vits 
    

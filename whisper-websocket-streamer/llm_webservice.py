@@ -5,11 +5,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, Request
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from webservice_routes import add_routes
-from webservice_streaming_routes import add_streaming_routes
-from llm_webservice_streaming_routes import add_llm_streaming_routes
 
+print("GEMINI KEY", os.environ.get('GOOGLE_GEMINI_API_KEY',''))
+print("CHATPGPT KEY", os.environ.get('OPENAI_CHATGPT_API_KEY',''))
+
+		
 app = FastAPI(
-    title="Whisper Webservice",
+    title="Whisper Webservice LLM",
     description='',
     version='0.0.1',
     contact={
@@ -20,10 +22,6 @@ app = FastAPI(
         "url": ''
     }
 )
-
-
-add_routes(app)
-add_streaming_routes(app)
 
 if os.environ.get('GOOGLE_GEMINI_API_KEY',''):
 	from llm_gemini_webservice_streaming_routes import add_gemini_llm_streaming_routes

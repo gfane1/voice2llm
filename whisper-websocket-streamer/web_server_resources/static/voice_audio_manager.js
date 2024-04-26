@@ -15,7 +15,7 @@ let VoiceAudioManager = function(config) {
 	let urlAudioPlayer
 	let playTime
 	let playQueue = []
-	const PLAYBACK_RATE = 0.75
+	const PLAYBACK_RATE = 0.9
 	
 	//console.log(Object.keys(that))
 

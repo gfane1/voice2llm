@@ -50,6 +50,7 @@ def add_routes(app):
 	base_path = os.path.dirname(os.path.abspath(__file__))+"/web_server_resources/"
 	templates = Jinja2Templates(directory= base_path + "templates")
 	app.mount("/assets", StaticFiles(directory=base_path + "/static"), name="static")
+	
 	@app.get("/")
 	def read_root(request: Request):
 		return templates.TemplateResponse("index.html", {"request": request})

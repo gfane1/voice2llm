@@ -16,7 +16,10 @@ let LanguageModelManager = function(config) {
 		try{
 			socket=new WebSocket(config.url)
 			//console.log(socket)
-		} catch(e){console.log('error:', e);}
+		} catch(e){
+			console.log('Error connecting:', e);
+			if (config.onError) config.onError(event)
+		}
 		
 		socket.onopen = () => {
 			console.log('WebSocket connection opened');

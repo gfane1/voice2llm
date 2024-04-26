@@ -28,7 +28,7 @@ async def write_queue_to_audio_file(thefile: BinaryIO,queue, overwrite = False):
 
 
 
-def load_audio(file: BinaryIO, encode=True, sr: int = SAMPLING_RATE):
+def load_audio(file: BinaryIO, encode=False, sr: int = SAMPLING_RATE):
     """
     Open an audio file object and read as mono waveform, resampling as necessary.
     Modified from https://github.com/openai/whisper/blob/main/whisper/audio.py to accept a file object
@@ -51,7 +51,7 @@ def load_audio(file: BinaryIO, encode=True, sr: int = SAMPLING_RATE):
             out, _ = (
                 ffmpeg.input("pipe:", threads=0)
                 .output("-", format="s16le", acodec="pcm_s16le", ac=1, ar=sr)
-                .run(cmd="ffmpeg", capture_stdout=True, capture_stderr=True, input=file.read())
+                .run(cmd="/usr/bin/ffmpeg", capture_stdout=True, capture_stderr=True, input=file.read())
             )
         except ffmpeg.Error as e:
             raise RuntimeError(f"Failed to load audio: {e.stderr.decode()}") from e
