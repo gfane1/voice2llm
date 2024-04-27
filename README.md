@@ -19,3 +19,13 @@ For a custom domain
 - ```docker-compose up```
 
 
+## Building the Frontend UI
+
+```
+cd voice2llm-ui
+npm run build
+```
+
+The build script moves the resulting files to the docs file in the root of the project ready for hosting on github.
+
+

@@ -2,6 +2,11 @@ import {useState, useEffect} from 'react'
 
 export default function useSystemMessageManager({forceRefresh}) {
 	
+	const defaultRoles = [
+		{name:'default', message:'You are a helpful assistant', config: {}, category: ''},
+		{name:'pirate', message:'You are a helpful assistant who always responds in the style of a pirate', config: {}, category: ''}
+	]
+	
 	const [roles, setRolesInner] = useState([]) // [{name:'',message:'',config:{}}]
 	async function setRoles(roles) {
 		localStorage.setItem('voice2llm_roles',JSON.stringify(roles))
@@ -43,7 +48,9 @@ export default function useSystemMessageManager({forceRefresh}) {
 		} catch (e) {}
 		try {
 			setRolesInner(JSON.parse(localStorage.getItem('voice2llm_roles')))
-		} catch (e) {}
+		} catch (e) {
+			setRoles(defaultRoles)
+		}
 		
 	}
 	
