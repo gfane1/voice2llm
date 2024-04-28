@@ -3,3 +3,4 @@ tts_models/
 whisper-websocket-streamer/__pycache__/
 .env
 
+Notes.md
