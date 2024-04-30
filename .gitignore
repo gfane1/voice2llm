@@ -3,4 +3,6 @@ tts_models/
 whisper-websocket-streamer/__pycache__/
 .env
 
-Notes.md
+Notes/Notes.md
+Notes/My-docker-compose.yml
+Notes/my-Dockerfile
